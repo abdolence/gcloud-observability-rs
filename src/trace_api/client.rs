@@ -115,19 +115,12 @@ impl GcpCloudTraceExporterClient {
     }
 
     fn truncatable_string(str: &str, max_len: usize) -> TruncatableString {
-        if str.len() > max_len {
-            let mut truncated_str = str.to_string();
-            truncated_str.truncate(max_len);
+        // The limit is in bytes, but the cut must not split a multi-byte character.
+        let cut = str.floor_char_boundary(max_len);
 
-            TruncatableString {
-                value: truncated_str,
-                truncated_byte_count: (str.len() - max_len) as i32,
-            }
-        } else {
-            TruncatableString {
-                value: str.to_string(),
-                truncated_byte_count: 0,
-            }
+        TruncatableString {
+            value: str[..cut].to_string(),
+            truncated_byte_count: (str.len() - cut) as i32,
         }
     }
 
@@ -336,5 +329,25 @@ mod tests {
             .time_events
             .expect("time_events must be set when span events are enabled");
         assert_eq!(time_events.time_event.len(), 1);
+    }
+
+    #[test]
+    fn truncation_stops_before_a_character_straddling_the_limit() {
+        let input = "a".repeat(127) + "ö";
+
+        let truncated = GcpCloudTraceExporterClient::truncatable_string(&input, 128);
+
+        assert_eq!(truncated.value, "a".repeat(127));
+        assert_eq!(truncated.truncated_byte_count, 2);
+    }
+
+    #[test]
+    fn truncation_keeps_a_character_ending_exactly_at_the_limit() {
+        let input = "a".repeat(126) + "öb";
+
+        let truncated = GcpCloudTraceExporterClient::truncatable_string(&input, 128);
+
+        assert_eq!(truncated.value, "a".repeat(126) + "ö");
+        assert_eq!(truncated.truncated_byte_count, 1);
     }
 }
