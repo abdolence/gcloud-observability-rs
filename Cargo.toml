@@ -53,7 +53,9 @@ logs = ["dep:tracing-subscriber", "dep:tracing-opentelemetry", "dep:serde_json",
 # `google.api`, which carry `LogSeverity`, `HttpRequest` and `MonitoredResource`.
 logs-api = ["logs", "dep:tokio", "dep:async-trait", "gcloud-sdk/google-logging-v2"]
 trace-api = ["dep:futures", "gcloud-sdk/google-devtools-cloudtrace-v2"]
-otlp = ["dep:opentelemetry-otlp", "dep:tokio"]
+# `internal-logs` compiles in the exporter's own warnings: without it a partially
+# rejected batch and a retried or abandoned export leave no trace.
+otlp = ["dep:opentelemetry-otlp", "dep:tokio", "opentelemetry-otlp/internal-logs"]
 logs-otlp = ["logs", "otlp", "opentelemetry-otlp/logs"]
 
 [dev-dependencies]
@@ -69,6 +71,7 @@ serde_json = "1"
 # The metrics example builds an `opentelemetry-otlp` `MetricExporter` itself; the library
 # has no metrics API.
 opentelemetry-otlp = { version = "0.33.1", default-features = false, features = ["metrics"] }
+opentelemetry-proto = { version = "0.33", default-features = false, features = ["gen-tonic", "trace"] }
 
 [[example]]
 name = "quickstart"

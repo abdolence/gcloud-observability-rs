@@ -344,6 +344,7 @@ fn events_of_the_transport_crates_are_not_exported() {
         tracing::debug!(target: "h2::codec::framed_write", "send frame");
         tracing::debug!(target: "hyper_util::client::legacy::connect::http", "connecting");
         tracing::debug!(target: "opentelemetry_sdk", "export failed");
+        tracing::warn!(target: "opentelemetry-otlp", "export partially rejected");
         tracing::info!(target: "orders::h2", "emitted by the application");
     });
 

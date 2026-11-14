@@ -13,6 +13,6 @@ Where an agent is present it is the cheaper and simpler choice.
 
 Every sink builds its entry from the same event record, so the [field conventions](./fields.md), [Error Reporting](../errors/error-reporting.md) and trace correlation behave the same on each.
 
-The two network sinks, the Cloud Logging API and OTLP, skip events whose target is in `h2`, `hyper`, `hyper_util`, `tonic`, `tower`, `rustls`, `gcloud_sdk`, `opentelemetry`, `opentelemetry_sdk` or `opentelemetry_otlp`.
+The two network sinks, the Cloud Logging API and OTLP, skip events whose target is in `h2`, `hyper`, `hyper_util`, `tonic`, `tower`, `rustls`, `gcloud_sdk`, `opentelemetry`, `opentelemetry_sdk` or `opentelemetry-otlp`.
 At DEBUG or TRACE every export makes events in those crates, and an entry made of one is another export to make.
 The JSON lines sink writes them.

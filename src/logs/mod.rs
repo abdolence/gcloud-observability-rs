@@ -93,6 +93,8 @@ impl LogSink {
 
 /// The crates whose events describe the connection a network sink exports over. At DEBUG
 /// or TRACE every export makes some, and an entry made of one is another export to make.
+/// `opentelemetry-otlp` is spelled with a hyphen because its `otel_warn!` events carry the
+/// package name as their target, not the module path.
 const TRANSPORT_CRATES: [&str; 10] = [
     "h2",
     "hyper",
@@ -103,7 +105,7 @@ const TRANSPORT_CRATES: [&str; 10] = [
     "gcloud_sdk",
     "opentelemetry",
     "opentelemetry_sdk",
-    "opentelemetry_otlp",
+    "opentelemetry-otlp",
 ];
 
 fn is_transport_target(target: &str) -> bool {
@@ -191,7 +193,7 @@ impl<S> GcpCloudLoggingLayerBuilder<S> {
     ///
     /// Events of the crates the writes travel through are not written: those whose target is
     /// in `h2`, `hyper`, `hyper_util`, `tonic`, `tower`, `rustls`, `gcloud_sdk`,
-    /// `opentelemetry`, `opentelemetry_sdk` or `opentelemetry_otlp`. At DEBUG or TRACE every
+    /// `opentelemetry`, `opentelemetry_sdk` or `opentelemetry-otlp`. At DEBUG or TRACE every
     /// write would make events that are written in turn, without end. The JSON sink writes
     /// them.
     #[cfg(feature = "logs-api")]
@@ -221,7 +223,7 @@ impl<S> GcpCloudLoggingLayerBuilder<S> {
     ///
     /// Events of the crates the exports travel through are not sent: those whose target is in
     /// `h2`, `hyper`, `hyper_util`, `tonic`, `tower`, `rustls`, `gcloud_sdk`, `opentelemetry`,
-    /// `opentelemetry_sdk` or `opentelemetry_otlp`. At DEBUG or TRACE every export would make
+    /// `opentelemetry_sdk` or `opentelemetry-otlp`. At DEBUG or TRACE every export would make
     /// events that are exported in turn, without end. The JSON sink writes them.
     #[cfg(feature = "logs-otlp")]
     pub fn with_otel_logger_provider(
