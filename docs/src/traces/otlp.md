@@ -74,6 +74,7 @@ The span processor gives up after 30 seconds, or `OTEL_BSP_EXPORT_TIMEOUT` when 
 
 Call `shutdown` on the provider before the process ends. `shutdown`, `force_flush` and dropping the provider block the calling thread until the batch task, which runs on the Tokio runtime the provider was created on, is done, so on a current-thread runtime they never return.
 Call them on a multi-threaded runtime, or from a thread outside the runtime.
+`shutdown` returns only the result of the last batch it exports, and a batch that failed earlier is reported as a log event and not as an error, so an `Ok` does not mean that every span was delivered.
 
 Shutdown exports every batch queued ahead of it, one after the other, and each may take the full timeout, so it can take the timeout once per 512 queued spans, rounded up.
 On a platform that kills the process shortly after SIGTERM, such as Cloud Run, keep that total below the time the platform allows:
