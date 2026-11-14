@@ -21,6 +21,9 @@ Call them on a multi-threaded runtime, or from a thread outside the runtime.
 The processor reports a failed export as an `ERROR` `tracing` event with the `opentelemetry_sdk` target.
 That target is on the list of [transport crates](./sinks.md) the network sinks skip, so a failing export does not log itself into another export.
 
+`shutdown` waits 5 seconds at most, and log records not exported by then are lost.
+Call `shutdown_with_timeout` for a longer wait when many records may be queued.
+
 `max_export_timeout` bounds how long an export may take, see [OTLP exporter](../traces/otlp.md#timeouts).
 
 ## Mapping

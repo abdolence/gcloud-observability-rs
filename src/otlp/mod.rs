@@ -70,8 +70,10 @@ pub struct GcpOtlpExporterBuilder {
     pub endpoint: Option<TelemetryEndpoint>,
     /// The longest a batch export may take before the batch is dropped. It is the timeout of
     /// connecting, TLS handshake included, and of every export request, and for spans also the
-    /// batch processor's bound. Shutdown exports every batch queued ahead of it, one after the
-    /// other, so it can take this long once per 512 queued spans or log records, rounded up.
+    /// batch processor's bound. Shutting the tracer provider down exports every batch queued
+    /// ahead of it, one after the other, so it can take this long once per 512 queued spans,
+    /// rounded up. The logger provider's `shutdown` waits 5 seconds at most, or the timeout
+    /// given to `shutdown_with_timeout`, and log records not exported by then are lost.
     /// While unset, connecting, the TLS handshake and every request time out after the
     /// OpenTelemetry standard 10 seconds, or `OTEL_EXPORTER_OTLP_TIMEOUT` (milliseconds) when
     /// it is set, and the span processor gives up after 30 seconds, or
