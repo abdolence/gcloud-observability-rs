@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-4e5de8c4.js";
+            window.path_to_searchindex_js = "../searchindex-fdc39914.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8d281217.js"></script>
@@ -252,7 +252,8 @@ The signal-specific <code>OTEL_EXPORTER_OTLP_TRACES_TIMEOUT</code> and <code>OTE
 The span processor gives up after 30 seconds, or <code>OTEL_BSP_EXPORT_TIMEOUT</code> when that is set.</p>
 <h2 id="shutting-down"><a class="header" href="#shutting-down">Shutting down</a></h2>
 <p>Call <code>shutdown</code> on the provider before the process ends. <code>shutdown</code>, <code>force_flush</code> and dropping the provider block the calling thread until the batch task, which runs on the Tokio runtime the provider was created on, is done, so on a current-thread runtime they never return.
-Call them on a multi-threaded runtime, or from a thread outside the runtime.</p>
+Call them on a multi-threaded runtime, or from a thread outside the runtime.
+<code>shutdown</code> returns only the result of the last batch it exports, and a batch that failed earlier is reported as a log event and not as an error, so an <code>Ok</code> does not mean that every span was delivered.</p>
 <p>Shutdown exports every batch queued ahead of it, one after the other, and each may take the full timeout, so it can take the timeout once per 512 queued spans, rounded up.
 On a platform that kills the process shortly after SIGTERM, such as Cloud Run, keep that total below the time the platform allows:</p>
 <pre><code class="language-rust ignore">let otlp = GcpOtlpExporterBuilder::new(google_project_id)

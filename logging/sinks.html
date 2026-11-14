@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-4e5de8c4.js";
+            window.path_to_searchindex_js = "../searchindex-fdc39914.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8d281217.js"></script>
@@ -194,7 +194,7 @@
 <p>The JSON lines sink costs no queue, no background task and no network traffic of its own.
 Where an agent is present it is the cheaper and simpler choice.</p>
 <p>Every sink builds its entry from the same event record, so the <a href="./fields.html">field conventions</a>, <a href="../errors/error-reporting.html">Error Reporting</a> and trace correlation behave the same on each.</p>
-<p>The two network sinks, the Cloud Logging API and OTLP, skip events whose target is in <code>h2</code>, <code>hyper</code>, <code>hyper_util</code>, <code>tonic</code>, <code>tower</code>, <code>rustls</code>, <code>gcloud_sdk</code>, <code>opentelemetry</code>, <code>opentelemetry_sdk</code> or <code>opentelemetry_otlp</code>.
+<p>The two network sinks, the Cloud Logging API and OTLP, skip events whose target is in <code>h2</code>, <code>hyper</code>, <code>hyper_util</code>, <code>tonic</code>, <code>tower</code>, <code>rustls</code>, <code>gcloud_sdk</code>, <code>opentelemetry</code>, <code>opentelemetry_sdk</code> or <code>opentelemetry-otlp</code>.
 At DEBUG or TRACE every export makes events in those crates, and an entry made of one is another export to make.
 The JSON lines sink writes them.</p>
 
