@@ -35,7 +35,7 @@
             const path_to_root = "../";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "../searchindex-fdc39914.js";
+            window.path_to_searchindex_js = "../searchindex-1d04f4c6.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="../toc-8d281217.js"></script>
@@ -213,6 +213,8 @@ On a current-thread runtime they wait out their timeout and the queued records a
 Call them on a multi-threaded runtime, or from a thread outside the runtime.</p>
 <p>The processor reports a failed export as an <code>ERROR</code> <code>tracing</code> event with the <code>opentelemetry_sdk</code> target.
 That target is on the list of <a href="./sinks.html">transport crates</a> the network sinks skip, so a failing export does not log itself into another export.</p>
+<p><code>shutdown</code> waits 5 seconds at most, and log records not exported by then are lost.
+Call <code>shutdown_with_timeout</code> for a longer wait when many records may be queued.</p>
 <p><code>max_export_timeout</code> bounds how long an export may take, see <a href="../traces/otlp.html#timeouts">OTLP exporter</a>.</p>
 <h2 id="mapping"><a class="header" href="#mapping">Mapping</a></h2>
 <p>The Telemetry API maps an OTLP log record onto a <code>LogEntry</code>, see <a href="https://docs.cloud.google.com/stackdriver/docs/reference/telemetry/otlp-log-record-to-log-entry">OTLP log record to LogEntry mapping</a>.
