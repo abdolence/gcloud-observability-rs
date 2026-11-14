@@ -1,6 +1,6 @@
 [package]
 name = "gcloud-observability"
-version = "0.31.1"
+version = "0.31.2"
 authors = ["Abdulla Abdurakhmanov <me@abdolence.dev>"]
 edition = "2021"
 rust-version = "1.91"
