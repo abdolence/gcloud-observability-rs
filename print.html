@@ -36,10 +36,10 @@
             const path_to_root = "";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-1d04f4c6.js";
+            window.path_to_searchindex_js = "searchindex-17e82b26.js";
         </script>
         <!-- Start loading toc.js asap -->
-        <script src="toc-8d281217.js"></script>
+        <script src="toc-68de8a49.js"></script>
     </head>
     <body>
     <div id="mdbook-help-container">
@@ -184,9 +184,9 @@
 <ul>
 <li><a href="#the-logging-layer">Cloud Logging</a>: a <code>tracing-subscriber</code> layer that turns every event into a structured log entry, correlated with the trace and span that emitted it, so the Google Cloud console shows each log line under its trace;</li>
 <li>three <a href="#sinks">log sinks</a>: JSON lines on stdout for GKE, Cloud Run and hosts with the Cloud Logging agent, the Cloud Logging API, and OTLP;</li>
-<li><a href="#error-reporting">Error Reporting</a>: errors logged with the code location, the <code>source()</code> chain and a backtrace, and <a href="#panic-hook">panics</a>, in the format Error Reporting groups;</li>
+<li><a href="#error-reporting-1">Error Reporting</a>: errors logged with the code location, the <code>source()</code> chain and a backtrace, and <a href="#panic-hook">panics</a>, in the format Error Reporting groups;</li>
 <li><a href="#choosing-an-exporter">Cloud Trace</a>: OpenTelemetry span exporters for the Telemetry API and for the Cloud Trace API v2;</li>
-<li><a href="#authentication">Authentication</a> for any OTLP exporter, <a href="#metrics-over-otlp">metrics</a> included, with Application Default Credentials refreshed in the background.</li>
+<li><a href="#authentication-1">Authentication</a> for any OTLP exporter, <a href="#metrics-over-otlp">metrics</a> included, with Application Default Credentials refreshed in the background.</li>
 </ul>
 <h2 id="terms"><a class="header" href="#terms">Terms</a></h2>
 <p>OTLP is the OpenTelemetry protocol, the wire format OpenTelemetry SDKs send traces, metrics and logs in.
@@ -197,10 +197,57 @@ Application Default Credentials (ADC) is the way Google client libraries find cr
 <li>A span is created by <code>tracing</code> macros or by the OpenTelemetry API. The <code>tracing-opentelemetry</code> layer turns <code>tracing</code> spans into OpenTelemetry spans, and a tracer provider hands finished spans to an exporter: <code>otlp</code> for the Telemetry API, or <code>trace-api</code> for the Cloud Trace API.</li>
 <li>A <code>tracing</code> event passes through the logging layer, which builds one log entry and gives it to the sink chosen when the layer was built.</li>
 <li>The logging layer reads the trace and span ids that the <code>tracing-opentelemetry</code> layer attached, so the entry and the span are linked in the console. The <code>tracing-opentelemetry</code> layer is therefore registered first, see <a href="#the-logging-layer">The logging layer</a>.</li>
-<li>The exporters, the Cloud Logging API sink and any OTLP exporter built elsewhere authenticate through the same ADC, see <a href="#authentication">Authentication</a>.</li>
+<li>The exporters, the Cloud Logging API sink and any OTLP exporter built elsewhere authenticate through the same ADC, see <a href="#authentication-1">Authentication</a>.</li>
 </ul>
 <p>Neither exporter is enabled by default, see <a href="#feature-flags">Feature flags</a>.
+To compare it with the plain OpenTelemetry crates, see <a href="#why-not-plain-opentelemetry">Why not plain OpenTelemetry</a>.
 To start using the library, see <a href="#quick-start">Quick start</a>.</p>
+<div style="break-before: page; page-break-before: always;"></div>
+<h1 id="why-not-plain-opentelemetry"><a class="header" href="#why-not-plain-opentelemetry">Why not plain OpenTelemetry</a></h1>
+<p><code>tracing</code>, <code>tracing-opentelemetry</code>, <code>opentelemetry-otlp</code>, <code>opentelemetry-appender-tracing</code> and the JSON formatter of <code>tracing-subscriber</code> can send spans and logs to Google Cloud without this library.
+They know nothing about Google Cloud, so each of the points below is left to the application.</p>
+<h2 id="authentication"><a class="header" href="#authentication">Authentication</a></h2>
+<p>The Telemetry API needs Google credentials on every request, and <code>opentelemetry-otlp</code> has no hook for Google tokens other than a tonic <code>Interceptor</code>, a callback that edits each outgoing request.
+An interceptor runs synchronously while Google tokens are refreshed asynchronously.</p>
+<ul>
+<li><code>GcpAuthInterceptor</code> refreshes the credentials in a background task and publishes the headers through a watch channel, so each request copies the latest ones without waiting;</li>
+<li>a failed refresh keeps the last headers in use and logs a warning when it starts failing and another when it recovers;</li>
+<li>the exporter builders set the endpoint, TLS roots, the connect, TLS handshake and request timeouts of the channel, and the <code>gcp.project_id</code> resource attribute that the Telemetry API reads;</li>
+<li>the same interceptor authenticates an <code>opentelemetry-otlp</code> metrics exporter, see <a href="#metrics-over-otlp">Metrics over OTLP</a>.</li>
+</ul>
+<p>See <a href="#authentication-1">Authentication</a> and <a href="#otlp-exporter">OTLP exporter</a>.</p>
+<h2 id="json-lines-on-stdout"><a class="header" href="#json-lines-on-stdout">JSON lines on stdout</a></h2>
+<p>GKE, Cloud Run and hosts with the Cloud Logging agent turn a JSON line on stdout into a log entry, and read special keys from it: <code>severity</code>, <code>logging.googleapis.com/trace</code>, <code>logging.googleapis.com/spanId</code>, <code>logging.googleapis.com/trace_sampled</code>, <code>logging.googleapis.com/sourceLocation</code>, <code>logging.googleapis.com/labels</code>, <code>logging.googleapis.com/insertId</code>, <code>logging.googleapis.com/operation</code> and <code>httpRequest</code>.
+See Google’s <a href="https://docs.cloud.google.com/logging/docs/structured-logging">structured logging</a> reference.</p>
+<ul>
+<li>The JSON output of <code>tracing-subscriber</code> writes none of them: it names the level <code>level</code>, so the severity is not recognised, and it has no trace or span keys, so the entry is not linked to its trace;</li>
+<li>the OpenTelemetry crates have no sink that writes this format;</li>
+<li>the <a href="#json-lines">JSON lines sink</a> writes these keys, and takes the trace and span from the OpenTelemetry span the event happened in.</li>
+</ul>
+<h2 id="log-entries-over-otlp"><a class="header" href="#log-entries-over-otlp">Log entries over OTLP</a></h2>
+<p>The stock bridge, <code>opentelemetry-appender-tracing</code>, sends a <code>tracing</code> event as a text payload with every field as a string label, and a log name made per call site.</p>
+<ul>
+<li>The <a href="#otlp">OTLP sink</a> sends the fields as a typed payload, fills <code>httpRequest</code>, <code>sourceLocation</code>, <code>operation</code> and <code>insertId</code>, and writes every entry to the log named by its <code>LogId</code>;</li>
+<li><a href="#comparison-with-the-opentelemetry-tracing-bridge">Comparison with the OpenTelemetry tracing bridge</a> shows the same event through both.</li>
+</ul>
+<h2 id="error-reporting"><a class="header" href="#error-reporting">Error Reporting</a></h2>
+<p>Error Reporting groups only entries in its own format, and no plain crate writes it.
+The <a href="#error-reporting-1">logging layer</a> does, for every sink:</p>
+<ul>
+<li>the <code>@type</code> of a <code>ReportedErrorEvent</code>, the <code>serviceContext</code> and the <code>reportLocation</code> of the event;</li>
+<li>the <code>source()</code> chain of an error passed as <code>&amp;dyn Error</code>, on the first line of the message;</li>
+<li>a <a href="#backtraces">backtrace</a> from <code>Backtrace::capture</code>, which costs nothing while <code>RUST_BACKTRACE</code> is unset;</li>
+<li>a <a href="#panic-hook">panic hook</a> that reports the location of the panic, not the location of the hook.</li>
+</ul>
+<h2 id="other-details"><a class="header" href="#other-details">Other details</a></h2>
+<ul>
+<li>The layer skips events of the crates an export goes through (<code>h2</code>, <code>hyper</code>, <code>tonic</code>, <code>rustls</code>, <code>opentelemetry</code> and others) when its sink sends over the network, so that a log entry about an export is not itself exported, which at DEBUG or TRACE level would make one more export for each;</li>
+<li>events inside a span are not attached to the span as span events by default, which Trace Explorer would show beside the log entry, see <a href="#span-events-and-annotations">Span events and annotations</a>;</li>
+<li>entries sent over OTLP store the bare trace ID, so they are filtered with <code>trace:"TRACE_ID"</code>, see the <a href="#otlp">OTLP sink</a>.</li>
+</ul>
+<h2 id="when-plain-opentelemetry-is-enough"><a class="header" href="#when-plain-opentelemetry-is-enough">When plain OpenTelemetry is enough</a></h2>
+<p>An application that sends only spans over OTLP and already handles Google authentication can use <code>opentelemetry-otlp</code> alone.
+The library adds most where logs, Error Reporting and credentials are involved.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h1>
 <p>Cargo.toml:</p>
@@ -290,7 +337,7 @@ use tracing_subscriber::layer::SubscriberExt;
 use tracing_subscriber::{EnvFilter, Registry};</code></pre>
 <p>Call <code>tracer_provider.shutdown()</code> and, in development mode, <code>logger_provider.shutdown()</code> before the process ends. They export what is still queued, and block the calling thread, so they need the multi-threaded Tokio runtime that <code>#[tokio::main]</code> starts.</p>
 <p>The development mode writes every event to the terminal and over OTLP. A service picks one sink.</p>
-<p>The credentials are found by ADC and need the role described in <a href="#authentication">Authentication</a>.</p>
+<p>The credentials are found by ADC and need the role described in <a href="#authentication-1">Authentication</a>.</p>
 <p>Full example available <a href="https://github.com/abdolence/gcloud-observability-rs/blob/master/examples/quickstart.rs">here</a>.</p>
 <h2 id="running-the-examples"><a class="header" href="#running-the-examples">Running the examples</a></h2>
 <p>All examples are in the <a href="https://github.com/abdolence/gcloud-observability-rs/tree/master/examples">examples</a> directory, named after their goal.
@@ -320,7 +367,7 @@ PROJECT_ID=&lt;your-google-project-id&gt; APP_MODE=production cargo run --exampl
 <tr><th>Feature</th><th>Default</th><th>Provides</th></tr>
 </thead>
 <tbody>
-<tr><td><code>logs</code></td><td>yes</td><td>The logging layer with the JSON lines sink, and <a href="#error-reporting">Error Reporting</a> for every sink</td></tr>
+<tr><td><code>logs</code></td><td>yes</td><td>The logging layer with the JSON lines sink, and <a href="#error-reporting-1">Error Reporting</a> for every sink</td></tr>
 <tr><td><code>logs-api</code></td><td>no</td><td>The <a href="#cloud-logging-api">Cloud Logging API sink</a>; includes <code>logs</code></td></tr>
 <tr><td><code>logs-otlp</code></td><td>no</td><td>The <a href="#otlp">OTLP sink</a>; includes <code>logs</code> and <code>otlp</code></td></tr>
 <tr><td><code>otlp</code></td><td>no</td><td>The <a href="#otlp-exporter">OTLP exporter</a> for the Telemetry API, and <code>GcpAuthInterceptor</code> for <a href="#metrics-over-otlp">any OTLP exporter</a></td></tr>
@@ -347,7 +394,7 @@ Nothing is re-exported at the crate root.</p>
 gcloud-observability = { version = "0.31", default-features = false, features = ["logs", "otlp", "tls-webpki-roots", "auth-default-crypto"] }
 </code></pre>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="authentication"><a class="header" href="#authentication">Authentication</a></h1>
+<h1 id="authentication-1"><a class="header" href="#authentication-1">Authentication</a></h1>
 <p>Every exporter and sink that talks to Google authenticates with Application Default Credentials (ADC), found in this order:</p>
 <ul>
 <li>a JSON file whose path is in the <code>GOOGLE_APPLICATION_CREDENTIALS</code> environment variable;</li>
@@ -472,7 +519,7 @@ Under a scoped subscriber (<code>tracing::subscriber::with_default</code>) with 
 </div>
 <p>The JSON lines sink costs no queue, no background task and no network traffic of its own.
 Where an agent is present it is the cheaper and simpler choice.</p>
-<p>Every sink builds its entry from the same event record, so the <a href="#field-conventions">field conventions</a>, <a href="#error-reporting">Error Reporting</a> and trace correlation behave the same on each.</p>
+<p>Every sink builds its entry from the same event record, so the <a href="#field-conventions">field conventions</a>, <a href="#error-reporting-1">Error Reporting</a> and trace correlation behave the same on each.</p>
 <p>The two network sinks, the Cloud Logging API and OTLP, skip events whose target is in <code>h2</code>, <code>hyper</code>, <code>hyper_util</code>, <code>tonic</code>, <code>tower</code>, <code>rustls</code>, <code>gcloud_sdk</code>, <code>opentelemetry</code>, <code>opentelemetry_sdk</code> or <code>opentelemetry-otlp</code>.
 At DEBUG or TRACE every export makes events in those crates, and an entry made of one is another export to make.
 The JSON lines sink writes them.</p>
@@ -633,7 +680,7 @@ Anything else is written verbatim into the JSON payload.</p>
 <p>An event field passed as <code>&amp;dyn Error</code> keeps its whole <code>source()</code> chain, one <code>Caused by:</code> line per source:</p>
 <pre><code class="language-rust ignore">tracing::error!(error = &amp;failure as &amp;dyn std::error::Error, "checkout failed");</code></pre>
 <p><code>error = %err</code> and <code>error = ?err</code> record only the text they format.
-See <a href="#error-reporting">Error Reporting</a> for how an error event is grouped.</p>
+See <a href="#error-reporting-1">Error Reporting</a> for how an error event is grouped.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="one-application-two-modes"><a class="header" href="#one-application-two-modes">One application, two modes</a></h1>
 <p>A service usually wants a console layer locally and the JSON layer once deployed, chosen by one <code>match</code> rather than duplicated <code>main</code> functions.
@@ -736,7 +783,7 @@ Sent to the Telemetry API, its records and those of the <a href="#otlp">OTLP sin
 <li>both entries carry the trace and span of the enclosing span.</li>
 </ul>
 <div style="break-before: page; page-break-before: always;"></div>
-<h1 id="error-reporting"><a class="header" href="#error-reporting">Error Reporting</a></h1>
+<h1 id="error-reporting-1"><a class="header" href="#error-reporting-1">Error Reporting</a></h1>
 <p>Cloud Error Reporting groups the log entries it recognises as errors, counts them and shows them in one list.
 The logging layer writes that format on every <a href="#sinks">sink</a> when it is built with a service context:</p>
 <pre><code class="language-rust ignore">    let (log_layer, log_handle) = GcpCloudLoggingLayerBuilder::new(google_project_id)
@@ -819,7 +866,7 @@ Call it once, early in <code>main</code>, after the subscriber is set:</p>
 
     install_panic_hook();</code></pre>
 <p>The event carries the panic message and <code>panic.location</code>, and <code>context.reportLocation</code> names that location rather than the hook.
-It reaches <a href="#error-reporting">Error Reporting</a> when the layer was built with <code>with_error_reporting</code>.
+It reaches <a href="#error-reporting-1">Error Reporting</a> when the layer was built with <code>with_error_reporting</code>.
 The <a href="#backtraces">backtrace</a> is captured inside the hook and needs <code>RUST_BACKTRACE</code> or <code>RUST_LIB_BACKTRACE</code>.</p>
 <h2 id="flushing"><a class="header" href="#flushing">Flushing</a></h2>
 <p>The JSON lines sink writes the event before the hook returns.
@@ -848,7 +895,7 @@ Choose <code>otlp</code> unless the case below applies. It shares credentials an
 <h2 id="things-to-know-before-moving-to-otlp"><a class="header" href="#things-to-know-before-moving-to-otlp">Things to know before moving to OTLP</a></h2>
 <ul>
 <li>Keep the Cloud Trace API enabled on the project, beside the Telemetry API: with it disabled, Google Cloud Observability discards the trace data sent to the Telemetry API. See the <a href="https://docs.cloud.google.com/stackdriver/docs/reference/telemetry/v1.traces">Telemetry API traces reference</a> and the <a href="https://docs.cloud.google.com/trace/docs/release-notes">Cloud Trace release notes</a>.</li>
-<li>The role to grant is <code>roles/telemetry.writer</code>, see <a href="#authentication">Authentication</a>.</li>
+<li>The role to grant is <code>roles/telemetry.writer</code>, see <a href="#authentication-1">Authentication</a>.</li>
 <li>A VPC Service Controls restriction on the Telemetry API applies only to that service. The Cloud Trace API is not covered by it, so check the perimeter for the API the exporter sends to.</li>
 <li>Google notes that the Cloud Trace format can have lower limits for certain fields than OTLP, so some OTLP data may be lost or not map to Cloud Trace fields. See <a href="https://docs.cloud.google.com/trace/docs/migrate-to-otlp-endpoints">Migrate from the Cloud Trace API to OTLP endpoints</a>.</li>
 <li>A regional endpoint, <code>telemetry.REGION.rep.googleapis.com</code>, is chosen with the exporter’s <code>endpoint</code>, see <a href="#regional-endpoints">OTLP exporter</a>.</li>
@@ -857,7 +904,7 @@ Choose <code>otlp</code> unless the case below applies. It shares credentials an
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="otlp-exporter"><a class="header" href="#otlp-exporter">OTLP exporter</a></h1>
 <p>The <code>otlp</code> feature adds <code>GcpOtlpExporterBuilder</code>, which builds OpenTelemetry exporters and providers that send spans, and with <code>logs-otlp</code> log records, to the Telemetry API through OTLP.
-It sets the endpoint, the TLS configuration, the <code>gcp.project_id</code> resource attribute and the authentication, see <a href="#authentication">Authentication</a>.</p>
+It sets the endpoint, the TLS configuration, the <code>gcp.project_id</code> resource attribute and the authentication, see <a href="#authentication-1">Authentication</a>.</p>
 <pre><code class="language-rust ignore">    let otlp = GcpOtlpExporterBuilder::new(google_project_id).with_resource(
         opentelemetry_sdk::Resource::builder()
             .with_service_name("traces-otlp-example")
@@ -940,7 +987,7 @@ On a platform that kills the process shortly after SIGTERM, such as Cloud Run, k
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="cloud-trace-api-exporter"><a class="header" href="#cloud-trace-api-exporter">Cloud Trace API exporter</a></h1>
 <p>The <code>trace-api</code> feature adds <code>trace_api::GcpCloudTraceExporterBuilder</code>, an exporter for the Cloud Trace API v2 (<code>cloudtrace.googleapis.com</code>).
-It authenticates with ADC, see <a href="#authentication">Authentication</a>, and needs the <code>roles/cloudtrace.agent</code> role.</p>
+It authenticates with ADC, see <a href="#authentication-1">Authentication</a>, and needs the <code>roles/cloudtrace.agent</code> role.</p>
 <pre><code class="language-rust ignore">    let exporter = GcpCloudTraceExporterBuilder::new(google_project_id)
         .with_resource(
             opentelemetry_sdk::Resource::builder()
@@ -1153,7 +1200,7 @@ opentelemetry-otlp = { version = "0.33", default-features = false, features = ["
         .build();</code></pre>
 <p><code>GcpAuthInterceptor::from_adc()</code> uses the Application Default Credentials with the <code>cloud-platform</code> scope.
 <code>GcpAuthInterceptor::new</code> takes other <code>GoogleAuthHeaders</code>, which <code>gcloud_observability::otlp</code> re-exports.
-See <a href="#authentication">Authentication</a> for how the headers are kept current.</p>
+See <a href="#authentication-1">Authentication</a> for how the headers are kept current.</p>
 <h2 id="resource-attributes"><a class="header" href="#resource-attributes">Resource attributes</a></h2>
 <p>The Telemetry API places each metric by the resource it comes from, and refuses a resource that misses one of these with <code>InvalidArgument</code>:</p>
 <ul>
@@ -1243,7 +1290,7 @@ A provider shutdown on a current-thread Tokio runtime does not export, see <a hr
 <h2 id="metrics-are-refused-with-invalidargument"><a class="header" href="#metrics-are-refused-with-invalidargument">Metrics are refused with InvalidArgument</a></h2>
 <p>The resource lacks <code>service.instance.id</code> or a real <code>cloud.region</code>, see <a href="#resource-attributes">Metrics over OTLP</a>.</p>
 <h2 id="permission-denied"><a class="header" href="#permission-denied">Permission denied</a></h2>
-<p>Check the API is enabled and the role is granted for the service, see <a href="#authentication">Authentication</a>.</p>
+<p>Check the API is enabled and the role is granted for the service, see <a href="#authentication-1">Authentication</a>.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="migration-guide"><a class="header" href="#migration-guide">Migration guide</a></h1>
 <h2 id="031"><a class="header" href="#031">0.31</a></h2>
