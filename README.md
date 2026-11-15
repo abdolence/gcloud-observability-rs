@@ -14,6 +14,13 @@ The library sends what a Rust service emits through `tracing` and OpenTelemetry 
 - Authentication of any OTLP exporter, metrics included, with Google Application Default Credentials (ADC), refreshed in the background;
 - Three log sinks: JSON lines on stdout for GKE, Cloud Run and hosts with the logging agent, the Cloud Logging API, and OTLP.
 
+## Why not plain OpenTelemetry
+
+`tracing-opentelemetry`, `opentelemetry-otlp` and `opentelemetry-appender-tracing` know nothing about Google Cloud.
+The library adds Google credentials for OTLP exporters, refreshed in the background; JSON lines in the format the Cloud Logging agent reads, linked to traces; log entries over OTLP with typed fields; and Error Reporting entries with the `source()` chain, backtrace and panic location.
+An application that only sends spans over OTLP and already handles authentication can use `opentelemetry-otlp` alone.
+See <https://gcloud-observability-rust.abdolence.dev/why.html>.
+
 ## Documentation
 
 Please follow to the official website: <https://gcloud-observability-rust.abdolence.dev/>.

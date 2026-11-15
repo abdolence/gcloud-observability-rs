@@ -1,6 +1,7 @@
 # Table of contents
 
 [Google Cloud observability for Rust](./intro.md)
+[Why not plain OpenTelemetry](./why.md)
 
 # Getting started
 

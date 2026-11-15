@@ -24,4 +24,5 @@ Application Default Credentials (ADC) is the way Google client libraries find cr
 - The exporters, the Cloud Logging API sink and any OTLP exporter built elsewhere authenticate through the same ADC, see [Authentication](./authentication.md).
 
 Neither exporter is enabled by default, see [Feature flags](./features.md).
+To compare it with the plain OpenTelemetry crates, see [Why not plain OpenTelemetry](./why.md).
 To start using the library, see [Quick start](./quick-start.md).
