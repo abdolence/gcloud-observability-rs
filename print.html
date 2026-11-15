@@ -36,7 +36,7 @@
             const path_to_root = "";
             const default_light_theme = "navy";
             const default_dark_theme = "navy";
-            window.path_to_searchindex_js = "searchindex-17e82b26.js";
+            window.path_to_searchindex_js = "searchindex-c9283495.js";
         </script>
         <!-- Start loading toc.js asap -->
         <script src="toc-68de8a49.js"></script>
@@ -220,7 +220,7 @@ An interceptor runs synchronously while Google tokens are refreshed asynchronous
 <p>GKE, Cloud Run and hosts with the Cloud Logging agent turn a JSON line on stdout into a log entry, and read special keys from it: <code>severity</code>, <code>logging.googleapis.com/trace</code>, <code>logging.googleapis.com/spanId</code>, <code>logging.googleapis.com/trace_sampled</code>, <code>logging.googleapis.com/sourceLocation</code>, <code>logging.googleapis.com/labels</code>, <code>logging.googleapis.com/insertId</code>, <code>logging.googleapis.com/operation</code> and <code>httpRequest</code>.
 See Google’s <a href="https://docs.cloud.google.com/logging/docs/structured-logging">structured logging</a> reference.</p>
 <ul>
-<li>The JSON output of <code>tracing-subscriber</code> writes none of them: it names the level <code>level</code>, so the severity is not recognised, and it has no trace or span keys, so the entry is not linked to its trace;</li>
+<li>The JSON output of <code>tracing-subscriber</code> writes none of them: it writes the level as <code>level</code> rather than <code>severity</code>, and it has no trace or span keys, so the entry is not linked to its trace;</li>
 <li>the OpenTelemetry crates have no sink that writes this format;</li>
 <li>the <a href="#json-lines">JSON lines sink</a> writes these keys, and takes the trace and span from the OpenTelemetry span the event happened in.</li>
 </ul>
@@ -237,7 +237,7 @@ The <a href="#error-reporting-1">logging layer</a> does, for every sink:</p>
 <li>the <code>@type</code> of a <code>ReportedErrorEvent</code>, the <code>serviceContext</code> and the <code>reportLocation</code> of the event;</li>
 <li>the <code>source()</code> chain of an error passed as <code>&amp;dyn Error</code>, on the first line of the message;</li>
 <li>a <a href="#backtraces">backtrace</a> from <code>Backtrace::capture</code>, which costs nothing while <code>RUST_BACKTRACE</code> is unset;</li>
-<li>a <a href="#panic-hook">panic hook</a> that reports the location of the panic, not the location of the hook.</li>
+<li>a <a href="#panic-hook">panic hook</a> that reports the file and line where the panic happened.</li>
 </ul>
 <h2 id="other-details"><a class="header" href="#other-details">Other details</a></h2>
 <ul>
@@ -246,8 +246,7 @@ The <a href="#error-reporting-1">logging layer</a> does, for every sink:</p>
 <li>entries sent over OTLP store the bare trace ID, so they are filtered with <code>trace:"TRACE_ID"</code>, see the <a href="#otlp">OTLP sink</a>.</li>
 </ul>
 <h2 id="when-plain-opentelemetry-is-enough"><a class="header" href="#when-plain-opentelemetry-is-enough">When plain OpenTelemetry is enough</a></h2>
-<p>An application that sends only spans over OTLP and already handles Google authentication can use <code>opentelemetry-otlp</code> alone.
-The library adds most where logs, Error Reporting and credentials are involved.</p>
+<p>An application that sends only spans over OTLP and already handles Google authentication can use <code>opentelemetry-otlp</code> alone.</p>
 <div style="break-before: page; page-break-before: always;"></div>
 <h1 id="quick-start"><a class="header" href="#quick-start">Quick start</a></h1>
 <p>Cargo.toml:</p>
