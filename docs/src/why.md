@@ -20,7 +20,7 @@ See [Authentication](./authentication.md) and [OTLP exporter](./traces/otlp.md).
 GKE, Cloud Run and hosts with the Cloud Logging agent turn a JSON line on stdout into a log entry, and read special keys from it: `severity`, `logging.googleapis.com/trace`, `logging.googleapis.com/spanId`, `logging.googleapis.com/trace_sampled`, `logging.googleapis.com/sourceLocation`, `logging.googleapis.com/labels`, `logging.googleapis.com/insertId`, `logging.googleapis.com/operation` and `httpRequest`.
 See Google's [structured logging](https://docs.cloud.google.com/logging/docs/structured-logging) reference.
 
-- The JSON output of `tracing-subscriber` writes none of them: it names the level `level`, so the severity is not recognised, and it has no trace or span keys, so the entry is not linked to its trace;
+- The JSON output of `tracing-subscriber` writes none of them: it writes the level as `level` rather than `severity`, and it has no trace or span keys, so the entry is not linked to its trace;
 - the OpenTelemetry crates have no sink that writes this format;
 - the [JSON lines sink](./logging/json-lines.md) writes these keys, and takes the trace and span from the OpenTelemetry span the event happened in.
 
@@ -39,7 +39,7 @@ The [logging layer](./errors/error-reporting.md) does, for every sink:
 - the `@type` of a `ReportedErrorEvent`, the `serviceContext` and the `reportLocation` of the event;
 - the `source()` chain of an error passed as `&dyn Error`, on the first line of the message;
 - a [backtrace](./errors/backtraces.md) from `Backtrace::capture`, which costs nothing while `RUST_BACKTRACE` is unset;
-- a [panic hook](./errors/panic-hook.md) that reports the location of the panic, not the location of the hook.
+- a [panic hook](./errors/panic-hook.md) that reports the file and line where the panic happened.
 
 ## Other details
 
@@ -50,4 +50,3 @@ The [logging layer](./errors/error-reporting.md) does, for every sink:
 ## When plain OpenTelemetry is enough
 
 An application that sends only spans over OTLP and already handles Google authentication can use `opentelemetry-otlp` alone.
-The library adds most where logs, Error Reporting and credentials are involved.
