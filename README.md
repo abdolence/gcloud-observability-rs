@@ -46,7 +46,7 @@ Cargo.toml:
 
 ```toml
 [dependencies]
-gcloud-observability = { version = "0.31", features = ["logs-otlp"] }
+gcloud-observability = { version = "0.32", features = ["logs-otlp"] }
 opentelemetry_sdk = "0.33"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }
@@ -182,6 +182,7 @@ The features it needs are in its header and in `required-features` in `Cargo.tom
 <!-- ANCHOR: compatibility -->
 | gcloud-observability version | opentelemetry version | opentelemetry-otlp | tracing-opentelemetry | gcloud-sdk |
 |------------------------------|-----------------------|--------------------|-----------------------|------------|
+| 0.32                         | 0.33                  | 0.33               | 0.34                  | 0.34       |
 | 0.31                         | 0.33                  | 0.33               | 0.34                  | 0.33       |
 | 0.30                         | 0.33                  | -                  | 0.34                  | 0.33       |
 | 0.29                         | 0.33                  | -                  | 0.34                  | 0.33       |
