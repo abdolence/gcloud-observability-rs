@@ -4,7 +4,7 @@ Cargo.toml:
 
 ```toml
 [dependencies]
-gcloud-observability = { version = "0.31", features = ["logs-otlp"] }
+gcloud-observability = { version = "0.32", features = ["logs-otlp"] }
 opentelemetry_sdk = "0.33"
 tracing = "0.1"
 tracing-subscriber = { version = "0.3", features = ["env-filter"] }

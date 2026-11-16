@@ -27,5 +27,5 @@ With `default-features = false`, enable a TLS roots feature and, for service acc
 
 ```toml
 [dependencies]
-gcloud-observability = { version = "0.31", default-features = false, features = ["logs", "otlp", "tls-webpki-roots", "auth-default-crypto"] }
+gcloud-observability = { version = "0.32", default-features = false, features = ["logs", "otlp", "tls-webpki-roots", "auth-default-crypto"] }
 ```
